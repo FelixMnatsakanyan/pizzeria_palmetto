@@ -1,17 +1,18 @@
 package am.trainings.palmetto.web;
 
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import java.net.URI;
 import am.trainings.palmetto.customer.Order;
 import am.trainings.palmetto.customer.service.OrderService;
+import am.trainings.palmetto.pizza.Pizza;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -50,5 +51,23 @@ public class OrderController {
 
         return orderById.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Long> createOrder(@RequestBody CreateOrderRequest request) {
+        if (request == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        Map<Pizza, Integer> pizzas = Map.of();
+        long orderId = orderService.orderPizza(request.username(), pizzas);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{orderId}")
+                .buildAndExpand(orderId)
+                .toUri();
+        return ResponseEntity.created(location).body(orderId);
+    }
+
+    private record CreateOrderRequest(String username, Map<String, Integer> pizzas) {
     }
 }
