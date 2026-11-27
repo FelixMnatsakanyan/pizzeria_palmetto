@@ -32,6 +32,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("Seeding demo customers and orders");
         Pizza pizza = new Pizza("margarita", "regular", new String[0]);
 
+        registerIfAbsent("Anonymous", "anonymous");
         registerIfAbsent("Sevak Martirosyan", "sevak");
         registerIfAbsent("Roland", "Roland");
 
@@ -51,7 +52,8 @@ public class OrderServiceImpl implements OrderService {
     public long orderPizza(String username, Map<Pizza, Integer> pizzas) {
 
         Customer customer = customerRepository.findCustomerByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+                .orElseGet(() -> customerRepository.findCustomerByUsername("anonymous")
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + username)));
 
         Order order = new Order();
         order.setCustomerId(customer.getCustomerId());
